@@ -1,0 +1,14 @@
+node_modules
+dist
+coverage
+.git
+.github
+.idea
+.env
+.env.*
+deploy
+dev
+*.md
+Dockerfile
+compose.yaml
+.dockerignore

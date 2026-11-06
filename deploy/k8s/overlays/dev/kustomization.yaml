@@ -1,0 +1,18 @@
+# Example development overlay – single replica, `dev` image tag.
+# Apply with:  kubectl apply -k deploy/k8s/overlays/dev
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base
+namespace: herbimage-public-dev
+images:
+  - name: ghcr.io/biodiversity-cz/herbimage-repo-public
+    newTag: dev
+patches:
+  - target:
+      kind: Deployment
+      name: herbimage-public
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 1

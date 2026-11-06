@@ -1,0 +1,51 @@
+name: herbimage-public
+
+# Local end-to-end stack: demo database (Postgres + seed), PostgREST and the
+# built application served by nginx. For host development (`npm run dev`)
+# start only the data part:  docker compose up -d db postgrest
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: herbimage
+      POSTGRES_USER: herbimage
+      POSTGRES_PASSWORD: herbimage
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./dev/postgres/init.sql:/docker-entrypoint-initdb.d/001-init.sql:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U herbimage -d herbimage']
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  postgrest:
+    image: postgrest/postgrest:v16.5
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGRST_DB_URI: postgres://authenticator:authenticator@db:5432/herbimage
+      PGRST_DB_SCHEMAS: public
+      PGRST_DB_ANON_ROLE: web_anon
+      PGRST_SERVER_PORT: 3000
+    ports:
+      # Exposed for `npm run dev` (Vite proxy target) and direct inspection.
+      - '3000:3000'
+
+  app:
+    build:
+      context: .
+    image: herbimage-public:local
+    depends_on:
+      db:
+        condition: service_healthy
+      postgrest:
+        condition: service_started
+    environment:
+      POSTGREST_UPSTREAM: http://postgrest:3000
+    ports:
+      - '8080:8080'
+
+volumes:
+  db-data:

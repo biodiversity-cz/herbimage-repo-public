@@ -1,0 +1,21 @@
+/*
+ * Application styles layered on top of Bootstrap.
+ * Keep this small – prefer Bootstrap utilities and components.
+ */
+
+/* Sortable headers in DataTable */
+.table th[role='button'] {
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+/* Vertically center table cell content (badges, links…) */
+.data-table td {
+  vertical-align: middle;
+}
+
+/* Allow horizontal scrolling of wide tables on narrow screens */
+.data-table {
+  overflow-x: auto;
+}

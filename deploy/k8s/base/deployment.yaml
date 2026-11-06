@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: herbimage-public
+  namespace: herbimage-public
+  labels:
+    app.kubernetes.io/name: herbimage-public
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: herbimage-public
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: herbimage-public
+    spec:
+      securityContext:
+        # nginx runs as uid 101 in the official image – run the whole pod
+        # rootless with a read-only root filesystem.
+        runAsNonRoot: true
+        runAsUser: 101
+        runAsGroup: 101
+        fsGroup: 101
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: web
+          image: ghcr.io/biodiversity-cz/herbimage-repo-public:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            # PostgREST service the in-pod nginx proxy forwards /api/* to.
+            - name: POSTGREST_UPSTREAM
+              value: http://postgrest:3000
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              cpu: 500m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          volumeMounts:
+            # Writable /etc/nginx/conf.d for the rendered server block config.
+            - name: nginx-conf-d
+              mountPath: /etc/nginx/conf.d
+            # Writable /tmp for the nginx pid and temp files.
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: nginx-conf-d
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}

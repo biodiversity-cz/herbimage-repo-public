@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: herbimage-public
+  namespace: herbimage-public
+  labels:
+    app.kubernetes.io/name: herbimage-public
+spec:
+  # Adjust to the ingress controller available in the target cluster.
+  ingressClassName: nginx
+  rules:
+    - host: herbimage.example.org
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: herbimage-public
+                port:
+                  name: http
